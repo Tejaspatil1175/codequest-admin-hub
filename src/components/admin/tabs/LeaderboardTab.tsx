@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trophy, Pause, Play, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGame } from '@/contexts/GameContext';
@@ -7,8 +7,16 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export function LeaderboardTab() {
-  const { leaderboard, leaderboardFrozen, toggleLeaderboardFreeze } = useGame();
+  const { leaderboard, leaderboardFrozen, toggleLeaderboardFreeze, loadLeaderboard, currentRoom } = useGame();
   const [showFreezeDialog, setShowFreezeDialog] = useState(false);
+
+  // Load leaderboard when component mounts or room changes
+  useEffect(() => {
+    if (currentRoom) {
+      console.log('🔄 LeaderboardTab: Loading leaderboard for room:', currentRoom.id);
+      loadLeaderboard(currentRoom.id);
+    }
+  }, [currentRoom, loadLeaderboard]);
 
   const handleToggleFreeze = () => {
     toggleLeaderboardFreeze();

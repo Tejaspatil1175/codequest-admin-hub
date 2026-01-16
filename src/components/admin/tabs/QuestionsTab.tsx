@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2, Lock, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash2, Lock, GripVertical, Download } from 'lucide-react';
+import sampleQuestions from '@/data/sample-questions.json';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,20 +23,57 @@ export function QuestionsTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showLoadSamplesDialog, setShowLoadSamplesDialog] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     inputFormat: '',
     expectedOutput: '',
+    constraints: '',
+    testInput: '',
+    testOutput: '',
     points: 100,
+    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+    accessCode: '',
     order: questions.length + 1,
   });
 
   const isGameStarted = currentRoom?.status !== 'not_started';
 
   const handleAdd = () => {
-    addQuestion(formData);
+    if (!currentRoom) {
+      toast.error('No room selected');
+      return;
+    }
+
+    // Map form data to backend API format
+    const questionData = {
+      title: formData.title,
+      description: formData.description,
+      inputFormat: formData.inputFormat,
+      outputFormat: formData.expectedOutput,
+      constraints: formData.constraints || 'No specific constraints',
+      examples: [
+        {
+          input: formData.testInput || 'Sample input',
+          output: formData.testOutput || 'Sample output',
+          explanation: 'Example test case'
+        }
+      ],
+      testCases: [
+        {
+          input: formData.testInput || 'Test input',
+          expectedOutput: formData.testOutput || 'Test output',
+          isHidden: false
+        }
+      ],
+      points: formData.points,
+      difficulty: formData.difficulty,
+      accessCode: formData.accessCode
+    };
+
+    addQuestion(currentRoom.id, questionData);
     toast.success('Question added successfully');
     setShowAddDialog(false);
     resetForm();
@@ -63,9 +101,38 @@ export function QuestionsTab() {
       description: '',
       inputFormat: '',
       expectedOutput: '',
+      constraints: '',
+      testInput: '',
+      testOutput: '',
       points: 100,
+      difficulty: 'medium',
+      accessCode: '',
       order: questions.length + 1,
     });
+  };
+
+  const handleLoadSamples = async () => {
+    if (!currentRoom) {
+      toast.error('No room selected');
+      return;
+    }
+
+    try {
+      let successCount = 0;
+      for (let i = 0; i < sampleQuestions.length; i++) {
+        const question = sampleQuestions[i];
+        await addQuestion(currentRoom.id, {
+          ...question,
+          order: questions.length + i + 1
+        });
+        successCount++;
+      }
+      toast.success(`Successfully loaded ${successCount} sample questions!`);
+      setShowLoadSamplesDialog(false);
+    } catch (error) {
+      toast.error('Failed to load sample questions');
+      console.error(error);
+    }
   };
 
   const openEditDialog = (question: Question) => {
@@ -75,7 +142,12 @@ export function QuestionsTab() {
       description: question.description,
       inputFormat: question.inputFormat,
       expectedOutput: question.expectedOutput,
+      constraints: '', // Not stored in Question type, use empty default
+      testInput: '', // Not stored in Question type, use empty default
+      testOutput: '', // Not stored in Question type, use empty default
       points: question.points,
+      difficulty: 'medium', // Not stored in Question type, use default
+      accessCode: question.accessCode || '',
       order: question.order,
     });
     setShowEditDialog(true);
@@ -92,14 +164,25 @@ export function QuestionsTab() {
               : 'Add, edit, or remove questions before the game starts'}
           </p>
         </div>
-        <Button
-          onClick={() => setShowAddDialog(true)}
-          disabled={isGameStarted}
-          className={cn(isGameStarted && 'opacity-50')}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Question
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowLoadSamplesDialog(true)}
+            disabled={isGameStarted}
+            className={cn(isGameStarted && 'opacity-50')}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Load Sample Questions
+          </Button>
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            disabled={isGameStarted}
+            className={cn(isGameStarted && 'opacity-50')}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Question
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -186,14 +269,14 @@ export function QuestionsTab() {
           }
         }}
       >
-        <DialogContent className="max-w-xl border-border bg-card">
+        <DialogContent className="max-w-xl border-border bg-card max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {showEditDialog ? 'Edit Question' : 'Add New Question'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto pr-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Title</Label>
@@ -268,6 +351,74 @@ export function QuestionsTab() {
                 />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Label>Constraints (Optional)</Label>
+              <Textarea
+                value={formData.constraints}
+                onChange={(e) =>
+                  setFormData({ ...formData, constraints: e.target.value })
+                }
+                placeholder="e.g., 1 <= n <= 1000"
+                className="min-h-[60px] bg-muted"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Difficulty</Label>
+                <select
+                  value={formData.difficulty}
+                  onChange={(e) =>
+                    setFormData({ ...formData, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })
+                  }
+                  className="w-full h-10 px-3 rounded-md border border-input bg-muted text-sm"
+                >
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Access Code (Optional)</Label>
+                <Input
+                  value={formData.accessCode}
+                  onChange={(e) =>
+                    setFormData({ ...formData, accessCode: e.target.value })
+                  }
+                  placeholder="e.g., SECRET123"
+                  className="bg-muted"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4 mt-4">
+              <h4 className="text-sm font-semibold mb-3">Test Case</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Test Input</Label>
+                  <Textarea
+                    value={formData.testInput}
+                    onChange={(e) =>
+                      setFormData({ ...formData, testInput: e.target.value })
+                    }
+                    placeholder="e.g., 4&#10;2 7 11 15&#10;9"
+                    className="min-h-[100px] bg-muted font-mono text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Expected Output</Label>
+                  <Textarea
+                    value={formData.testOutput}
+                    onChange={(e) =>
+                      setFormData({ ...formData, testOutput: e.target.value })
+                    }
+                    placeholder="e.g., 0 1"
+                    className="min-h-[100px] bg-muted font-mono text-sm"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
@@ -290,6 +441,17 @@ export function QuestionsTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Load Sample Questions Confirmation */}
+      <ConfirmDialog
+        open={showLoadSamplesDialog}
+        onOpenChange={setShowLoadSamplesDialog}
+        title="Load Sample Questions?"
+        description={`This will add ${sampleQuestions.length} pre-built coding questions to your room. Each question includes test cases, examples, and varying difficulty levels (50-250 points).`}
+        confirmText="Load Questions"
+        variant="default"
+        onConfirm={handleLoadSamples}
+      />
 
       {/* Delete Confirmation */}
       <ConfirmDialog

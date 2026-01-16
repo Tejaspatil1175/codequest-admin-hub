@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Room, Team, Question, Trade, LeaderboardEntry, AdminStats } from '@/types/admin';
+import { apiService } from '@/lib/apiService';
+import { useToast } from '@/hooks/use-toast';
 
 interface GameContextType {
   rooms: Room[];
@@ -11,81 +13,54 @@ interface GameContextType {
   stats: AdminStats;
   tradingEnabled: boolean;
   leaderboardFrozen: boolean;
-  
+  isLoading: boolean;
+
   // Room actions
-  createRoom: (config: Omit<Room, 'id' | 'code' | 'status' | 'createdAt'>) => Room;
+  createRoom: (config: { roomName: string; initialPoints: number }) => Promise<Room | null>;
+  loadMyRooms: () => Promise<void>;
   selectRoom: (roomId: string) => void;
+  closeRoom: (roomId: string) => Promise<void>;
+  reopenRoom: (roomId: string) => Promise<void>;
+  deleteRoom: (roomId: string) => Promise<void>;
+
+  // Team actions
+  banTeam: (teamId: string, reason: string) => Promise<void>;
+  unbanTeam: (teamId: string) => Promise<void>;
+  loadParticipants: (roomId: string) => Promise<void>;
+  loadLeaderboard: (roomId: string) => Promise<void>;
+
+  // Question actions
+  addQuestion: (roomId: string, question: any) => Promise<void>;
+
+  // Trade actions
+  loadTransactions: (roomId: string) => Promise<void>;
+
+  // Legacy actions (kept for compatibility)
   startGame: () => void;
   pauseGame: () => void;
   endGame: () => void;
   resetRoom: () => void;
-  
-  // Team actions
-  banTeam: (teamId: string, reason: string) => void;
-  unbanTeam: (teamId: string) => void;
-  
-  // Question actions
-  addQuestion: (question: Omit<Question, 'id' | 'locked'>) => void;
   updateQuestion: (questionId: string, updates: Partial<Question>) => void;
   deleteQuestion: (questionId: string) => void;
   forceUnlockQuestion: (questionId: string, teamId: string) => void;
-  
-  // Trade actions
   cancelTrade: (tradeId: string) => void;
   toggleTrading: () => void;
-  
-  // Leaderboard actions
   toggleLeaderboardFreeze: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-// Generate a 6-digit room code
-function generateRoomCode(): string {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-// Mock initial data
-const mockTeams: Team[] = [
-  { id: '1', name: 'ByteBlasters', points: 450, solvedQuestions: 3, status: 'active', banHistory: [], joinedAt: new Date() },
-  { id: '2', name: 'CodeCrusaders', points: 520, solvedQuestions: 4, status: 'active', banHistory: [], joinedAt: new Date() },
-  { id: '3', name: 'AlgoAces', points: 380, solvedQuestions: 2, status: 'active', banHistory: [], joinedAt: new Date() },
-  { id: '4', name: 'DebugDynamos', points: 290, solvedQuestions: 2, status: 'banned', banReason: 'Suspicious activity', banHistory: [{ reason: 'Suspicious activity', bannedAt: new Date() }], joinedAt: new Date() },
-  { id: '5', name: 'SyntaxSurfers', points: 610, solvedQuestions: 5, status: 'active', banHistory: [], joinedAt: new Date() },
-];
-
-const mockQuestions: Question[] = [
-  { id: '1', order: 1, title: 'Two Sum', description: 'Find two numbers that add up to target', inputFormat: 'Array of integers, target', expectedOutput: 'Indices of two numbers', points: 100, locked: false },
-  { id: '2', order: 2, title: 'Reverse String', description: 'Reverse a given string', inputFormat: 'String', expectedOutput: 'Reversed string', points: 50, locked: false },
-  { id: '3', order: 3, title: 'Binary Search', description: 'Implement binary search algorithm', inputFormat: 'Sorted array, target', expectedOutput: 'Index or -1', points: 150, locked: false },
-];
-
-const mockTrades: Trade[] = [
-  { id: '1', sellerId: '1', sellerName: 'ByteBlasters', buyerId: '3', buyerName: 'AlgoAces', questionId: '1', questionTitle: 'Two Sum', price: 50, status: 'completed', timestamp: new Date(Date.now() - 3600000) },
-  { id: '2', sellerId: '2', sellerName: 'CodeCrusaders', buyerId: '5', buyerName: 'SyntaxSurfers', questionId: '2', questionTitle: 'Reverse String', price: 30, status: 'pending', timestamp: new Date() },
-];
-
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  const [rooms, setRooms] = useState<Room[]>([
-    { id: '1', code: 'ABC123', startingPoints: 500, maxTeams: 10, totalQuestions: 5, tradingEnabled: true, penaltiesEnabled: true, status: 'live', createdAt: new Date() },
-  ]);
-  const [currentRoom, setCurrentRoom] = useState<Room | null>(rooms[0]);
-  const [teams, setTeams] = useState<Team[]>(mockTeams);
-  const [questions, setQuestions] = useState<Question[]>(mockQuestions);
-  const [trades, setTrades] = useState<Trade[]>(mockTrades);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [tradingEnabled, setTradingEnabled] = useState(true);
   const [leaderboardFrozen, setLeaderboardFrozen] = useState(false);
-
-  const leaderboard: LeaderboardEntry[] = [...teams]
-    .filter((t) => t.status === 'active')
-    .sort((a, b) => b.points - a.points)
-    .map((team, index) => ({
-      rank: index + 1,
-      teamId: team.id,
-      teamName: team.name,
-      points: team.points,
-      questionsSolved: team.solvedQuestions,
-    }));
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const stats: AdminStats = {
     totalActiveRooms: rooms.filter((r) => r.status === 'live').length,
@@ -93,24 +68,368 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     liveGames: rooms.filter((r) => r.status === 'live').length,
   };
 
-  const createRoom = useCallback((config: Omit<Room, 'id' | 'code' | 'status' | 'createdAt'>) => {
-    const newRoom: Room = {
-      ...config,
-      id: Date.now().toString(),
-      code: generateRoomCode(),
-      status: 'not_started',
-      createdAt: new Date(),
-    };
-    setRooms((prev) => [...prev, newRoom]);
-    setCurrentRoom(newRoom);
-    return newRoom;
+  // Load rooms on mount
+  useEffect(() => {
+    loadMyRooms();
   }, []);
+
+  const loadMyRooms = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.getMyRooms();
+
+      if (response.success && response.data) {
+        const mappedRooms: Room[] = response.data.map((room: any) => ({
+          id: room.roomId || room._id,
+          code: room.roomCode,
+          startingPoints: room.initialPoints,
+          maxTeams: 10, // Default value
+          totalQuestions: room.questions?.length || 0,
+          tradingEnabled: true,
+          penaltiesEnabled: true,
+          status: room.status === 'active' ? 'live' : room.status === 'closed' ? 'ended' : 'not_started',
+          createdAt: new Date(room.createdAt),
+        }));
+
+        setRooms(mappedRooms);
+
+        // Set first room as current if none selected
+        if (!currentRoom && mappedRooms.length > 0) {
+          setCurrentRoom(mappedRooms[0]);
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Error Loading Rooms',
+        description: error instanceof Error ? error.message : 'Could not load rooms',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentRoom, toast]);
+
+  const createRoom = useCallback(async (config: { roomName: string; initialPoints: number }): Promise<Room | null> => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.createRoom(config);
+
+      if (response.success && response.data) {
+        const newRoom: Room = {
+          id: response.data._id,
+          code: response.data.roomCode,
+          startingPoints: response.data.initialPoints,
+          maxTeams: 10,
+          totalQuestions: 0,
+          tradingEnabled: true,
+          penaltiesEnabled: true,
+          status: 'not_started',
+          createdAt: new Date(response.data.createdAt),
+        };
+
+        setRooms((prev) => [...prev, newRoom]);
+        setCurrentRoom(newRoom);
+
+        toast({
+          title: 'Room Created',
+          description: `Room code: ${newRoom.code}`,
+        });
+
+        return newRoom;
+      }
+      return null;
+    } catch (error) {
+      toast({
+        title: 'Error Creating Room',
+        description: error instanceof Error ? error.message : 'Could not create room',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   const selectRoom = useCallback((roomId: string) => {
     const room = rooms.find((r) => r.id === roomId);
-    if (room) setCurrentRoom(room);
+    if (room) {
+      setCurrentRoom(room);
+      // Load room data
+      loadParticipants(roomId);
+      loadLeaderboard(roomId);
+    }
   }, [rooms]);
 
+  const closeRoom = useCallback(async (roomId: string) => {
+    try {
+      setIsLoading(true);
+      await apiService.closeRoom(roomId);
+
+      setRooms((prev) =>
+        prev.map((r) => (r.id === roomId ? { ...r, status: 'ended' as const } : r))
+      );
+
+      if (currentRoom?.id === roomId) {
+        setCurrentRoom((prev) => (prev ? { ...prev, status: 'ended' } : null));
+      }
+
+      toast({
+        title: 'Room Closed',
+        description: 'The room has been closed successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Closing Room',
+        description: error instanceof Error ? error.message : 'Could not close room',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentRoom, toast]);
+
+  const reopenRoom = useCallback(async (roomId: string) => {
+    try {
+      setIsLoading(true);
+      await apiService.reopenRoom(roomId);
+
+      setRooms((prev) =>
+        prev.map((r) => (r.id === roomId ? { ...r, status: 'live' as const } : r))
+      );
+
+      if (currentRoom?.id === roomId) {
+        setCurrentRoom((prev) => (prev ? { ...prev, status: 'live' } : null));
+      }
+
+      toast({
+        title: 'Room Reopened',
+        description: 'The room has been reopened successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Reopening Room',
+        description: error instanceof Error ? error.message : 'Could not reopen room',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentRoom, toast]);
+
+  const deleteRoom = useCallback(async (roomId: string) => {
+    try {
+      setIsLoading(true);
+      await apiService.deleteRoom(roomId);
+
+      setRooms((prev) => prev.filter((r) => r.id !== roomId));
+
+      if (currentRoom?.id === roomId) {
+        setCurrentRoom(null);
+      }
+
+      toast({
+        title: 'Room Deleted',
+        description: 'The room has been deleted successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Deleting Room',
+        description: error instanceof Error ? error.message : 'Could not delete room',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentRoom, toast]);
+
+  const loadParticipants = useCallback(async (roomId: string) => {
+    try {
+      const response = await apiService.getRoomParticipants(roomId);
+
+      if (response.success && response.data) {
+        // Backend returns { roomInfo, participants } or just an array
+        const participantsList = Array.isArray(response.data)
+          ? response.data
+          : (response.data as any).participants || [];
+
+        const mappedTeams: Team[] = participantsList.map((participant: any) => ({
+          id: participant.userId || participant._id,
+          name: participant.teamName || participant.username,
+          points: participant.currentPoints || 0,
+          solvedQuestions: participant.solvedQuestions || 0,
+          status: participant.isBanned ? 'banned' : 'active',
+          banReason: participant.banReason,
+          banHistory: [],
+          joinedAt: new Date(participant.joinedAt),
+        }));
+
+        setTeams(mappedTeams);
+      }
+    } catch (error) {
+      console.error('Error loading participants:', error);
+    }
+  }, []);
+
+  const loadLeaderboard = useCallback(async (roomId: string) => {
+    try {
+      console.log('🔄 Loading leaderboard for room:', roomId);
+      const response = await apiService.getLeaderboard(roomId);
+
+      console.log('📊 Leaderboard response:', response);
+
+      if (response.success && response.data) {
+        // Map backend response to frontend LeaderboardEntry format
+        const mappedLeaderboard: LeaderboardEntry[] = response.data.map((entry: any) => ({
+          teamId: entry.userId || entry.teamId,
+          teamName: entry.teamName || entry.username,
+          points: entry.currentPoints || entry.points,
+          questionsSolved: entry.questionsSolved || 0,
+          rank: entry.rank || 0
+        }));
+
+        console.log('✅ Mapped leaderboard:', mappedLeaderboard);
+        setLeaderboard(mappedLeaderboard);
+      }
+    } catch (error) {
+      console.error('❌ Error loading leaderboard:', error);
+    }
+  }, []);
+
+  const banTeam = useCallback(async (teamId: string, reason: string) => {
+    if (!currentRoom) return;
+
+    try {
+      setIsLoading(true);
+      await apiService.banUser(currentRoom.id, teamId);
+
+      setTeams((prev) =>
+        prev.map((t) =>
+          t.id === teamId
+            ? {
+              ...t,
+              status: 'banned' as const,
+              banReason: reason,
+              banHistory: [...t.banHistory, { reason, bannedAt: new Date() }],
+            }
+            : t
+        )
+      );
+
+      toast({
+        title: 'User Banned',
+        description: 'The user has been banned from the room',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Banning User',
+        description: error instanceof Error ? error.message : 'Could not ban user',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentRoom, toast]);
+
+  const unbanTeam = useCallback(async (teamId: string) => {
+    if (!currentRoom) return;
+
+    try {
+      setIsLoading(true);
+      await apiService.unbanUser(currentRoom.id, teamId);
+
+      setTeams((prev) =>
+        prev.map((t) =>
+          t.id === teamId
+            ? {
+              ...t,
+              status: 'active' as const,
+              banReason: undefined,
+              banHistory: t.banHistory.map((h, i) =>
+                i === t.banHistory.length - 1 ? { ...h, unbannedAt: new Date() } : h
+              ),
+            }
+            : t
+        )
+      );
+
+      toast({
+        title: 'User Unbanned',
+        description: 'The user has been unbanned from the room',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Unbanning User',
+        description: error instanceof Error ? error.message : 'Could not unban user',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentRoom, toast]);
+
+  const addQuestion = useCallback(async (roomId: string, questionData: any) => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.addQuestion(roomId, questionData);
+
+      if (response.success && response.data) {
+        const newQuestion: Question = {
+          id: response.data._id,
+          order: questions.length + 1,
+          title: response.data.title,
+          description: response.data.description,
+          inputFormat: questionData.inputFormat,
+          expectedOutput: questionData.outputFormat,
+          points: response.data.points,
+          locked: false,
+          accessCode: response.data.accessCode,
+        };
+
+        setQuestions((prev) => [...prev, newQuestion]);
+
+        toast({
+          title: 'Question Added',
+          description: `${newQuestion.title} has been added to the room`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error Adding Question',
+        description: error instanceof Error ? error.message : 'Could not add question',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [questions.length, toast]);
+
+  const loadTransactions = useCallback(async (roomId: string) => {
+    try {
+      const response = await apiService.getRoomTransactions(roomId);
+
+      if (response.success && response.data) {
+        // Map transactions to Trade type
+        const mappedTrades: Trade[] = response.data.map((transaction: any) => ({
+          id: transaction._id,
+          sellerId: transaction.sellerId,
+          sellerName: transaction.sellerName || 'Unknown',
+          buyerId: transaction.buyerId,
+          buyerName: transaction.buyerName || 'Unknown',
+          questionId: transaction.questionId,
+          questionTitle: transaction.questionTitle || 'Unknown',
+          price: transaction.amount || transaction.points,
+          status: transaction.status || 'completed',
+          timestamp: new Date(transaction.createdAt || transaction.timestamp),
+        }));
+
+        setTrades(mappedTrades);
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+    }
+  }, []);
+
+  // Legacy actions (kept for compatibility with existing UI)
   const startGame = useCallback(() => {
     if (!currentRoom) return;
     setRooms((prev) =>
@@ -130,11 +449,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const endGame = useCallback(() => {
     if (!currentRoom) return;
-    setRooms((prev) =>
-      prev.map((r) => (r.id === currentRoom.id ? { ...r, status: 'ended' as const } : r))
-    );
-    setCurrentRoom((prev) => (prev ? { ...prev, status: 'ended' } : null));
-  }, [currentRoom]);
+    closeRoom(currentRoom.id);
+  }, [currentRoom, closeRoom]);
 
   const resetRoom = useCallback(() => {
     if (!currentRoom) return;
@@ -154,47 +470,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     );
   }, [currentRoom]);
 
-  const banTeam = useCallback((teamId: string, reason: string) => {
-    setTeams((prev) =>
-      prev.map((t) =>
-        t.id === teamId
-          ? {
-              ...t,
-              status: 'banned' as const,
-              banReason: reason,
-              banHistory: [...t.banHistory, { reason, bannedAt: new Date() }],
-            }
-          : t
-      )
-    );
-  }, []);
-
-  const unbanTeam = useCallback((teamId: string) => {
-    setTeams((prev) =>
-      prev.map((t) =>
-        t.id === teamId
-          ? {
-              ...t,
-              status: 'active' as const,
-              banReason: undefined,
-              banHistory: t.banHistory.map((h, i) =>
-                i === t.banHistory.length - 1 ? { ...h, unbannedAt: new Date() } : h
-              ),
-            }
-          : t
-      )
-    );
-  }, []);
-
-  const addQuestion = useCallback((question: Omit<Question, 'id' | 'locked'>) => {
-    const newQuestion: Question = {
-      ...question,
-      id: Date.now().toString(),
-      locked: currentRoom?.status !== 'not_started',
-    };
-    setQuestions((prev) => [...prev, newQuestion]);
-  }, [currentRoom]);
-
   const updateQuestion = useCallback((questionId: string, updates: Partial<Question>) => {
     setQuestions((prev) =>
       prev.map((q) => (q.id === questionId ? { ...q, ...updates } : q))
@@ -206,7 +481,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const forceUnlockQuestion = useCallback((questionId: string, teamId: string) => {
-    // In a real app, this would unlock the question for a specific team
     console.log(`Force unlocking question ${questionId} for team ${teamId}`);
   }, []);
 
@@ -236,19 +510,27 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         stats,
         tradingEnabled,
         leaderboardFrozen,
+        isLoading,
         createRoom,
+        loadMyRooms,
         selectRoom,
+        closeRoom,
+        reopenRoom,
+        deleteRoom,
         startGame,
         pauseGame,
         endGame,
         resetRoom,
         banTeam,
         unbanTeam,
+        loadParticipants,
+        loadLeaderboard,
         addQuestion,
         updateQuestion,
         deleteQuestion,
         forceUnlockQuestion,
         cancelTrade,
+        loadTransactions,
         toggleTrading,
         toggleLeaderboardFreeze,
       }}

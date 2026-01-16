@@ -24,6 +24,7 @@ export default function CreateRoom() {
   const [copied, setCopied] = useState(false);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [config, setConfig] = useState({
+    roomName: '',
     startingPoints: 500,
     maxTeams: 10,
     totalQuestions: 5,
@@ -31,10 +32,21 @@ export default function CreateRoom() {
     penaltiesEnabled: true,
   });
 
-  const handleCreate = () => {
-    const room = createRoom(config);
-    setCreatedCode(room.code);
-    toast.success('Room created successfully!');
+  const handleCreate = async () => {
+    if (!config.roomName.trim()) {
+      toast.error('Please enter a room name');
+      return;
+    }
+
+    const room = await createRoom({
+      roomName: config.roomName,
+      initialPoints: config.startingPoints,
+    });
+
+    if (room) {
+      setCreatedCode(room.code);
+      toast.success('Room created successfully!');
+    }
   };
 
   const copyCode = () => {
@@ -136,6 +148,23 @@ export default function CreateRoom() {
 
           <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
             <div className="space-y-8">
+              {/* Room Name */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Room Name</Label>
+                <Input
+                  type="text"
+                  placeholder="e.g., Friday Night Coding Battle"
+                  value={config.roomName}
+                  onChange={(e) =>
+                    setConfig({ ...config, roomName: e.target.value })
+                  }
+                  className="bg-muted text-lg"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Give your room a descriptive name
+                </p>
+              </div>
+
               {/* Starting Points */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">

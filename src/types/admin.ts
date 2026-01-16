@@ -36,6 +36,7 @@ export interface Question {
   expectedOutput: string;
   points: number;
   locked: boolean;
+  accessCode?: string;
 }
 
 export interface Trade {

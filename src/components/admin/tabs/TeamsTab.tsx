@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Ban, CheckCircle, AlertCircle, History } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Ban, CheckCircle, AlertCircle, History, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useGame } from '@/contexts/GameContext';
@@ -17,12 +17,28 @@ import { cn } from '@/lib/utils';
 import type { Team } from '@/types/admin';
 
 export function TeamsTab() {
-  const { teams, banTeam, unbanTeam } = useGame();
+  const { teams, currentRoom, banTeam, unbanTeam, loadParticipants } = useGame();
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [banReason, setBanReason] = useState('');
   const [showBanDialog, setShowBanDialog] = useState(false);
   const [showUnbanDialog, setShowUnbanDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Load participants when component mounts or room changes
+  useEffect(() => {
+    if (currentRoom?.id) {
+      loadParticipants(currentRoom.id);
+    }
+  }, [currentRoom?.id, loadParticipants]);
+
+  const handleRefresh = async () => {
+    if (!currentRoom?.id) return;
+    setIsRefreshing(true);
+    await loadParticipants(currentRoom.id);
+    setIsRefreshing(false);
+    toast.success('Teams list refreshed');
+  };
 
   const handleBan = () => {
     if (!selectedTeam || !banReason.trim()) return;
@@ -52,15 +68,26 @@ export function TeamsTab() {
             Manage all teams in the current room
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-green-400" />
-            Active: {teams.filter((t) => t.status === 'active').length}
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-red-400" />
-            Banned: {teams.filter((t) => t.status === 'banned').length}
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-green-400" />
+              Active: {teams.filter((t) => t.status === 'active').length}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-red-400" />
+              Banned: {teams.filter((t) => t.status === 'banned').length}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing || !currentRoom}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
+            Refresh
+          </Button>
         </div>
       </div>
 

@@ -36,11 +36,11 @@ export function AdminHeader() {
           <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-1.5">
             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
               <span className="text-sm font-medium text-primary">
-                {admin?.name.charAt(0).toUpperCase()}
+                {admin?.username.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="hidden sm:block">
-              <p className="text-sm font-medium">{admin?.name}</p>
+              <p className="text-sm font-medium">{admin?.username}</p>
               <p className="text-xs text-muted-foreground">{admin?.email}</p>
             </div>
           </div>
