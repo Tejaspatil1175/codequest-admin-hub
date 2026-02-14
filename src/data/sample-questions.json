@@ -1,336 +1,284 @@
 [
   {
-    "title": "Two Sum",
-    "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice.",
-    "inputFormat": "First line: integer n (array length)\nSecond line: n space-separated integers (array elements)\nThird line: integer target",
-    "outputFormat": "Two space-separated integers representing the indices",
-    "constraints": "2 <= n <= 10^4\n-10^9 <= nums[i] <= 10^9\n-10^9 <= target <= 10^9",
+    "title": "Sum of Two Numbers",
+    "description": "Given two integers a and b, return their sum.",
+    "inputFormat": "Two space-separated integers a and b.",
+    "outputFormat": "A single integer representing the sum.",
+    "constraints": "-100 <= a, b <= 100",
     "examples": [
       {
-        "input": "4\n2 7 11 15\n9",
-        "output": "0 1",
-        "explanation": "nums[0] + nums[1] = 2 + 7 = 9"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "4\n2 7 11 15\n9",
-        "expectedOutput": "0 1",
-        "isHidden": false
-      }
-    ],
-    "points": 100,
-    "difficulty": "easy",
-    "accessCode": "TWOSUM"
-  },
-  {
-    "title": "Reverse String",
-    "description": "Write a function that reverses a string. The input string is given as an array of characters.",
-    "inputFormat": "A single line containing a string",
-    "outputFormat": "The reversed string",
-    "constraints": "1 <= s.length <= 10^5\ns[i] is a printable ascii character",
-    "examples": [
-      {
-        "input": "hello",
-        "output": "olleh",
-        "explanation": "The string 'hello' reversed is 'olleh'"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "hello",
-        "expectedOutput": "olleh",
-        "isHidden": false
-      }
-    ],
-    "points": 50,
-    "difficulty": "easy",
-    "accessCode": "REVERSE"
-  },
-  {
-    "title": "Palindrome Number",
-    "description": "Given an integer x, return true if x is a palindrome, and false otherwise. An integer is a palindrome when it reads the same backward as forward.",
-    "inputFormat": "A single integer x",
-    "outputFormat": "true or false",
-    "constraints": "-2^31 <= x <= 2^31 - 1",
-    "examples": [
-      {
-        "input": "121",
-        "output": "true",
-        "explanation": "121 reads as 121 from left to right and from right to left"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "121",
-        "expectedOutput": "true",
-        "isHidden": false
-      }
-    ],
-    "points": 75,
-    "difficulty": "easy"
-  },
-  {
-    "title": "Maximum Subarray",
-    "description": "Given an integer array nums, find the subarray with the largest sum, and return its sum.",
-    "inputFormat": "First line: integer n (array length)\nSecond line: n space-separated integers",
-    "outputFormat": "A single integer representing the maximum sum",
-    "constraints": "1 <= n <= 10^5\n-10^4 <= nums[i] <= 10^4",
-    "examples": [
-      {
-        "input": "9\n-2 1 -3 4 -1 2 1 -5 4",
-        "output": "6",
-        "explanation": "The subarray [4,-1,2,1] has the largest sum 6"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "9\n-2 1 -3 4 -1 2 1 -5 4",
-        "expectedOutput": "6",
-        "isHidden": false
-      }
-    ],
-    "points": 150,
-    "difficulty": "medium",
-    "accessCode": "MAXSUB"
-  },
-  {
-    "title": "Valid Parentheses",
-    "description": "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid. An input string is valid if: Open brackets must be closed by the same type of brackets, and open brackets must be closed in the correct order.",
-    "inputFormat": "A single line containing a string of brackets",
-    "outputFormat": "true or false",
-    "constraints": "1 <= s.length <= 10^4\ns consists of parentheses only '()[]{}'",
-    "examples": [
-      {
-        "input": "()[]{}",
-        "output": "true",
-        "explanation": "All brackets are properly matched"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "()[]{}",
-        "expectedOutput": "true",
-        "isHidden": false
-      }
-    ],
-    "points": 125,
-    "difficulty": "easy"
-  },
-  {
-    "title": "Merge Two Sorted Lists",
-    "description": "You are given the heads of two sorted linked lists. Merge the two lists into one sorted list. The list should be made by splicing together the nodes of the first two lists. Return the merged linked list as space-separated values.",
-    "inputFormat": "First line: space-separated integers for list1\nSecond line: space-separated integers for list2",
-    "outputFormat": "Space-separated integers representing the merged sorted list",
-    "constraints": "The number of nodes in both lists is in the range [0, 50]\n-100 <= Node.val <= 100\nBoth lists are sorted in non-decreasing order",
-    "examples": [
-      {
-        "input": "1 2 4\n1 3 4",
-        "output": "1 1 2 3 4 4",
-        "explanation": "Merging [1,2,4] and [1,3,4] gives [1,1,2,3,4,4]"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "1 2 4\n1 3 4",
-        "expectedOutput": "1 1 2 3 4 4",
-        "isHidden": false
-      }
-    ],
-    "points": 175,
-    "difficulty": "medium",
-    "accessCode": "MERGE2"
-  },
-  {
-    "title": "Binary Search",
-    "description": "Given a sorted array of integers nums and a target value, return the index of the target if it exists, otherwise return -1. You must write an algorithm with O(log n) runtime complexity.",
-    "inputFormat": "First line: integer n (array length)\nSecond line: n space-separated sorted integers\nThird line: integer target",
-    "outputFormat": "A single integer representing the index (or -1 if not found)",
-    "constraints": "1 <= n <= 10^4\n-10^4 <= nums[i], target <= 10^4\nAll integers in nums are unique\nnums is sorted in ascending order",
-    "examples": [
-      {
-        "input": "5\n-1 0 3 5 9\n5",
-        "output": "3",
-        "explanation": "5 exists in nums and its index is 3"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "5\n-1 0 3 5 9\n5",
-        "expectedOutput": "3",
-        "isHidden": false
-      }
-    ],
-    "points": 100,
-    "difficulty": "easy",
-    "accessCode": "BINARY"
-  },
-  {
-    "title": "Climbing Stairs",
-    "description": "You are climbing a staircase. It takes n steps to reach the top. Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?",
-    "inputFormat": "A single integer n",
-    "outputFormat": "A single integer representing the number of ways",
-    "constraints": "1 <= n <= 45",
-    "examples": [
-      {
-        "input": "3",
-        "output": "3",
-        "explanation": "There are three ways: 1+1+1, 1+2, 2+1"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "3",
-        "expectedOutput": "3",
-        "isHidden": false
-      }
-    ],
-    "points": 125,
-    "difficulty": "easy",
-    "accessCode": "CLIMB"
-  },
-  {
-    "title": "Longest Common Prefix",
-    "description": "Write a function to find the longest common prefix string amongst an array of strings. If there is no common prefix, return an empty string.",
-    "inputFormat": "First line: integer n (number of strings)\nNext n lines: one string per line",
-    "outputFormat": "The longest common prefix string",
-    "constraints": "1 <= n <= 200\n0 <= strs[i].length <= 200\nstrs[i] consists of only lowercase English letters",
-    "examples": [
-      {
-        "input": "3\nflower\nflow\nflight",
-        "output": "fl",
-        "explanation": "The longest common prefix is 'fl'"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "3\nflower\nflow\nflight",
-        "expectedOutput": "fl",
-        "isHidden": false
-      }
-    ],
-    "points": 100,
-    "difficulty": "easy",
-    "accessCode": "PREFIX"
-  },
-  {
-    "title": "Best Time to Buy and Sell Stock",
-    "description": "You are given an array prices where prices[i] is the price of a given stock on the ith day. You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock. Return the maximum profit you can achieve.",
-    "inputFormat": "First line: integer n (number of days)\nSecond line: n space-separated integers (prices)",
-    "outputFormat": "A single integer representing the maximum profit",
-    "constraints": "1 <= n <= 10^5\n0 <= prices[i] <= 10^4",
-    "examples": [
-      {
-        "input": "6\n7 1 5 3 6 4",
+        "input": "2 3",
         "output": "5",
-        "explanation": "Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5"
+        "explanation": "2 + 3 = 5"
       }
     ],
     "testCases": [
       {
-        "input": "6\n7 1 5 3 6 4",
+        "input": "2 3",
         "expectedOutput": "5",
         "isHidden": false
+      },
+      {
+        "input": "10 20",
+        "expectedOutput": "30",
+        "isHidden": true
+      },
+      {
+        "input": "-5 5",
+        "expectedOutput": "0",
+        "isHidden": true
       }
     ],
-    "points": 150,
+    "points": 10,
     "difficulty": "easy",
-    "accessCode": "STOCKS"
+    "accessCode": "SUM"
   },
   {
-    "title": "Fibonacci Number",
-    "description": "The Fibonacci numbers form a sequence where each number is the sum of the two preceding ones, starting from 0 and 1. Given n, calculate F(n).",
-    "inputFormat": "A single integer n",
-    "outputFormat": "A single integer F(n)",
-    "constraints": "0 <= n <= 30",
+    "title": "Difference of Two Numbers",
+    "description": "Given two integers a and b, return the result of a minus b.",
+    "inputFormat": "Two space-separated integers a and b.",
+    "outputFormat": "A single integer representing the difference.",
+    "constraints": "-100 <= a, b <= 100",
     "examples": [
       {
-        "input": "4",
-        "output": "3",
-        "explanation": "F(4) = F(3) + F(2) = 2 + 1 = 3"
-      }
-    ],
-    "testCases": [
-      {
-        "input": "4",
-        "expectedOutput": "3",
-        "isHidden": false
-      }
-    ],
-    "points": 75,
-    "difficulty": "easy",
-    "accessCode": "FIBONACCI"
-  },
-  {
-    "title": "Remove Duplicates from Sorted Array",
-    "description": "Given an integer array nums sorted in non-decreasing order, remove the duplicates in-place such that each unique element appears only once. Return the number of unique elements.",
-    "inputFormat": "First line: integer n (array length)\nSecond line: n space-separated sorted integers",
-    "outputFormat": "A single integer representing the count of unique elements",
-    "constraints": "1 <= n <= 3 * 10^4\n-100 <= nums[i] <= 100\nnums is sorted in non-decreasing order",
-    "examples": [
-      {
-        "input": "3\n1 1 2",
+        "input": "5 3",
         "output": "2",
-        "explanation": "There are 2 unique elements: 1 and 2"
+        "explanation": "5 - 3 = 2"
       }
     ],
     "testCases": [
       {
-        "input": "3\n1 1 2",
+        "input": "5 3",
         "expectedOutput": "2",
         "isHidden": false
+      },
+      {
+        "input": "10 20",
+        "expectedOutput": "-10",
+        "isHidden": true
+      },
+      {
+        "input": "0 5",
+        "expectedOutput": "-5",
+        "isHidden": true
       }
     ],
-    "points": 100,
+    "points": 10,
     "difficulty": "easy",
-    "accessCode": "UNIQUE"
+    "accessCode": "DIFF"
   },
   {
-    "title": "Longest Substring Without Repeating Characters",
-    "description": "Given a string s, find the length of the longest substring without repeating characters.",
-    "inputFormat": "A single line containing a string",
-    "outputFormat": "A single integer representing the length",
-    "constraints": "0 <= s.length <= 5 * 10^4\ns consists of English letters, digits, symbols and spaces",
+    "title": "Product of Two Numbers",
+    "description": "Given two integers a and b, return their product.",
+    "inputFormat": "Two space-separated integers a and b.",
+    "outputFormat": "A single integer representing the product.",
+    "constraints": "-100 <= a, b <= 100",
     "examples": [
       {
-        "input": "abcabcbb",
-        "output": "3",
-        "explanation": "The answer is 'abc', with the length of 3"
+        "input": "2 3",
+        "output": "6",
+        "explanation": "2 * 3 = 6"
       }
     ],
     "testCases": [
       {
-        "input": "abcabcbb",
-        "expectedOutput": "3",
+        "input": "2 3",
+        "expectedOutput": "6",
         "isHidden": false
+      },
+      {
+        "input": "5 5",
+        "expectedOutput": "25",
+        "isHidden": true
+      },
+      {
+        "input": "10 0",
+        "expectedOutput": "0",
+        "isHidden": true
       }
     ],
-    "points": 200,
-    "difficulty": "medium",
-    "accessCode": "SUBSTR"
+    "points": 15,
+    "difficulty": "easy",
+    "accessCode": "PROD"
   },
   {
-    "title": "Container With Most Water",
-    "description": "You are given an integer array height of length n. There are n vertical lines where the endpoints of the ith line are (i, 0) and (i, height[i]). Find two lines that together with the x-axis form a container that contains the most water. Return the maximum amount of water a container can store.",
-    "inputFormat": "First line: integer n (array length)\nSecond line: n space-separated integers (heights)",
-    "outputFormat": "A single integer representing the maximum area",
-    "constraints": "2 <= n <= 10^5\n0 <= height[i] <= 10^4",
+    "title": "Remainder of Division",
+    "description": "Given two integers a and b, return the remainder when a is divided by b. Assume b is never 0.",
+    "inputFormat": "Two space-separated integers a and b.",
+    "outputFormat": "A single integer representing the remainder.",
+    "constraints": "1 <= a, b <= 100",
     "examples": [
       {
-        "input": "9\n1 8 6 2 5 4 8 3 7",
-        "output": "49",
-        "explanation": "The max area is between height[1]=8 and height[8]=7, area = 7 * 7 = 49"
+        "input": "5 2",
+        "output": "1",
+        "explanation": "5 divided by 2 is 2 with remainder 1"
       }
     ],
     "testCases": [
       {
-        "input": "9\n1 8 6 2 5 4 8 3 7",
-        "expectedOutput": "49",
+        "input": "5 2",
+        "expectedOutput": "1",
         "isHidden": false
+      },
+      {
+        "input": "10 3",
+        "expectedOutput": "1",
+        "isHidden": true
+      },
+      {
+        "input": "12 4",
+        "expectedOutput": "0",
+        "isHidden": true
+      },
+      {
+        "input": "12 5",
+        "expectedOutput": "2",
+        "isHidden": true
       }
     ],
-    "points": 250,
+    "points": 15,
+    "difficulty": "easy",
+    "accessCode": "REM"
+  },
+  {
+    "title": "Perimeter of Rectangle",
+    "description": "Given the length l and width w of a rectangle, return its perimeter. Formula: 2 * (l + w).",
+    "inputFormat": "Two space-separated integers l and w.",
+    "outputFormat": "A single integer representing the perimeter.",
+    "constraints": "1 <= l, w <= 100",
+    "examples": [
+      {
+        "input": "5 3",
+        "output": "16",
+        "explanation": "2 * (5 + 3) = 16"
+      }
+    ],
+    "testCases": [
+      {
+        "input": "5 3",
+        "expectedOutput": "16",
+        "isHidden": false
+      },
+      {
+        "input": "10 10",
+        "expectedOutput": "40",
+        "isHidden": true
+      },
+      {
+        "input": "1 2",
+        "expectedOutput": "6",
+        "isHidden": true
+      }
+    ],
+    "points": 20,
+    "difficulty": "easy",
+    "accessCode": "PERIM"
+  },
+  {
+    "title": "Square of a Number",
+    "description": "Given an integer n, return its square (n * n).",
+    "inputFormat": "A single integer n.",
+    "outputFormat": "A single integer representing the square.",
+    "constraints": "-100 <= n <= 100",
+    "examples": [
+      {
+        "input": "4",
+        "output": "16",
+        "explanation": "4 * 4 = 16"
+      }
+    ],
+    "testCases": [
+      {
+        "input": "4",
+        "expectedOutput": "16",
+        "isHidden": false
+      },
+      {
+        "input": "5",
+        "expectedOutput": "25",
+        "isHidden": true
+      },
+      {
+        "input": "-3",
+        "expectedOutput": "9",
+        "isHidden": true
+      }
+    ],
+    "points": 20,
+    "difficulty": "easy",
+    "accessCode": "SQR"
+  },
+  {
+    "title": "Check if Equal",
+    "description": "Given two integers a and b, print 1 if they are equal, and 0 if they are not.",
+    "inputFormat": "Two space-separated integers a and b.",
+    "outputFormat": "1 or 0",
+    "constraints": "-100 <= a, b <= 100",
+    "examples": [
+      {
+        "input": "5 5",
+        "output": "1",
+        "explanation": "5 is equal to 5"
+      },
+      {
+        "input": "5 6",
+        "output": "0",
+        "explanation": "5 is not equal to 6"
+      }
+    ],
+    "testCases": [
+      {
+        "input": "5 5",
+        "expectedOutput": "1",
+        "isHidden": false
+      },
+      {
+        "input": "10 20",
+        "expectedOutput": "0",
+        "isHidden": true
+      },
+      {
+        "input": "0 0",
+        "expectedOutput": "1",
+        "isHidden": true
+      }
+    ],
+    "points": 25,
     "difficulty": "medium",
-    "accessCode": "WATER"
+    "accessCode": "EQUAL"
+  },
+  {
+    "title": "Next Number",
+    "description": "Given an integer n, return the next integer (n + 1).",
+    "inputFormat": "A single integer n.",
+    "outputFormat": "A single integer representing n + 1.",
+    "constraints": "-1000 <= n <= 1000",
+    "examples": [
+      {
+        "input": "4",
+        "output": "5",
+        "explanation": "The number after 4 is 5"
+      }
+    ],
+    "testCases": [
+      {
+        "input": "4",
+        "expectedOutput": "5",
+        "isHidden": false
+      },
+      {
+        "input": "99",
+        "expectedOutput": "100",
+        "isHidden": true
+      },
+      {
+        "input": "-1",
+        "expectedOutput": "0",
+        "isHidden": true
+      }
+    ],
+    "points": 25,
+    "difficulty": "medium",
+    "accessCode": "NEXT"
   }
 ]
